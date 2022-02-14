@@ -1,0 +1,170 @@
+﻿Car = (name: string, age: u32); // Struct template
+
+"this is a string" "and this is another string" test "test"
+
+main = () {
+	car  = ("hello", 13) Car;
+	person = ("ZekeWK", 10) (githubName: string, accountCreated: u16);
+
+	// person2 = (githubName: "ZekeWK", accountCreated: 10); NO!!!
+
+	temp = ("test", 100, true);
+
+	a = (10) u8;
+	// evt
+	b = 10 u8;
+
+	printMessage = () {
+	    "I am happy" sys_print;
+	};
+
+	printMessage = () {
+	    "I am sad" sys_print;
+	};
+
+	add = (a: u64, b: u64) {
+	    // todo
+	} -- (a: u16, b: u16) {
+	    // todo
+	};
+
+	add ~ (a: u16, b: u16) {
+	    // todo
+	};
+
+	addu64u64 = (a: u64, b: u64) {
+		(a, b) sys_add
+	};
+
+	addu8u8 = (a: u8, b: u8) {
+		(a, b) sys_add
+	};
+
+	add = (addu64u64, addu8u8) overload ctp;
+
+
+	add+u64:u64 = (a: u64, b: u64) {
+	};
+
+	add+f32:f32 = (a: f32, b: f32) {
+	};
+
+
+
+	+ = (a: u64, b: u64) {
+		// todo
+	}
+	(a: matrix, b: matrix) {
+		// todo
+	}
+
+	+ = (a: u64, b: u64) {
+		// todo
+	};
+
+	c = (a, b) +;
+	d = (a, b) pow;
+
+	Person = (name: string);
+	harry = ("Harry") Person;
+
+	too = (person: Person) {
+		person pickle pack;
+	};
+
+	dave = harry pickle pack;
+	dave2 = harry too;
+
+	foo = (str: Person, func: FuncPtr) {
+		str func;
+	};
+
+	print = (str: Person) {
+		str sys_print;
+	};
+
+	print = (str: u8) {
+		str sys_print;
+	};
+
+	do = (func: FuncPtr) {
+		(10, 10) func;
+		(10.0, 10.0) func;
+	}
+
+	add do;
+
+
+	ctp = (vars: <T>, func: FuncPtr) {
+
+	}
+
+	((harry, print), foo) ctp;
+
+	(harry, print) foo ctp;
+
+	(10000, primeGen) ctp;
+	10000 primeGen ctp;
+
+	Skola = (name: string, merit: u32);
+	Grej = (name: string, other: u16, merit: u64);
+
+	faa = (skl: Skola) {
+		// todo
+	};
+
+	grej = ("hello", 10, 100) Grej;
+
+	(grej.name, grej.merit) faa;
+
+
+	((a, b) eq, () { }) if;
+
+
+
+	a + b
+	
+	+ = () () {
+	};
+
+
+	if = (cond: bool) (func: FuncPtr) {
+	    //compiler magic
+	}
+
+
+
+
+	(a, b) eq if {
+	} else (a, b) gt if {
+	} else {
+	}
+
+	(init, do, cond) for {
+	}
+
+	(start, end, step) for {
+	}
+
+	(a, b) eq while {
+	}
+
+
+	
+
+
+
+
+	= if else for while
+
+
+
+
+
+
+	
+};
+
+
+
+

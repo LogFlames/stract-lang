@@ -1,0 +1,16 @@
+C:\Users\elilu\code\stract-lang\bin\Debug\net5.0\stract-lang.exe
+C:\Users\elilu\code\stract-lang\bin\Debug\net5.0\stract-lang.deps.json
+C:\Users\elilu\code\stract-lang\bin\Debug\net5.0\stract-lang.runtimeconfig.json
+C:\Users\elilu\code\stract-lang\bin\Debug\net5.0\stract-lang.runtimeconfig.dev.json
+C:\Users\elilu\code\stract-lang\bin\Debug\net5.0\stract-lang.dll
+C:\Users\elilu\code\stract-lang\bin\Debug\net5.0\ref\stract-lang.dll
+C:\Users\elilu\code\stract-lang\bin\Debug\net5.0\stract-lang.pdb
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\stract-lang.csproj.AssemblyReference.cache
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\stract-lang.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\stract-lang.AssemblyInfoInputs.cache
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\stract-lang.AssemblyInfo.cs
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\stract-lang.csproj.CoreCompileInputs.cache
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\stract-lang.dll
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\ref\stract-lang.dll
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\stract-lang.pdb
+C:\Users\elilu\code\stract-lang\obj\Debug\net5.0\stract-lang.genruntimeconfig.cache
