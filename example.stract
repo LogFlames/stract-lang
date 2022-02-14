@@ -168,3 +168,78 @@ main = () {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Car = (name : string, prodYear: u32, topSpeed: u32);
+
+bmw = ("BMW", 1982, 300) Car;
+
+main = () {
+	foo = (car : Car) {
+		car.name print;
+	};
+
+	audi = ("Audi", 2023, 20) Car;
+
+	audi foo;
+
+	
+
+};
+
+
+class Car:
+	def __init__(self, maker):
+		self.name = maker
+
+
+def foo(car):
+	print(car.name)
+
+au = Car("Audi")
+
+foo(au)
+
+
+
+
+
+
+private void foo(Car car) {
+	System.out.println(car.name);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

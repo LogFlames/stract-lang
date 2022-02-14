@@ -1,0 +1,8 @@
+﻿Person = (name : string, age:u16, height: f32);
+
+main = () {
+	person = ("David Malte Elias //Lundell", 18, 182);
+	person = ("David Malte Elias Lundell"//, 18, 182);
+};
+
+var"string"

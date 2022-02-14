@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -10,11 +11,19 @@ namespace stract_lang
         private static void Main(string[] args)
         {
             string sourceFilePath = "";
-            if (args.Length < 1)
+            if (args.Length == 0)
             {
-                Console.Write("Enter path to source file: ");
-                sourceFilePath = Console.ReadLine();
-            } else
+                /*
+                 * Console.Write("Enter path to source file: ");
+                 * sourceFilePath = Console.ReadLine(); */
+                sourceFilePath = "../../../test.stract";
+                if (sourceFilePath == "")
+                {
+                    Console.WriteLine("No path to source-file was given.");
+                    return;
+                }
+            }
+            else
             {
                 sourceFilePath = args[0];
             }
@@ -28,13 +37,24 @@ namespace stract_lang
             }
 
             string code = File.ReadAllText(sourceFilePath);
-            code.Replace("\r\n", "\n");
+            code = code.Replace("\r\n", "\n");
+            code = code.Replace("\t", "    ");
             Tokenize(code);
         }
 
         private static void Tokenize(string code)
         {
-            string[] specialWords = { ",", "(", ")", "{", "}", "=", ";", ":" };
+            Dictionary<string, TokenType> specialWords = new Dictionary<string, TokenType>(){
+                { ",", TokenType.NotDefined },
+                { "(", TokenType.ParenthesisStart },
+                { ")", TokenType.ParenthesisEnd },
+                { "{", TokenType.NotDefined },
+                { "}", TokenType.NotDefined },
+                { "=", TokenType.Assign},
+                { ";", TokenType.NotDefined },
+                { ":", TokenType.NotDefined },
+            };
+
             char stringDelimiter = '"';
 
             string beginLineComment = "//";
@@ -42,12 +62,12 @@ namespace stract_lang
             string endMultilineComment = "*/";
 
             List<Token> tokens = new List<Token>();
-            List<string> words = new List<string>();
 
             int i = 0;
             while (i < code.Length)
             {
                 string word = "";
+                int wordStart = i;
 
                 while (i < code.Length)
                 {
@@ -57,6 +77,7 @@ namespace stract_lang
                         {
                             i++;
                         }
+                        break;
                     }
                     if (i + beginMultilineComment.Length <= code.Length && code.Substring(i, beginMultilineComment.Length) == beginMultilineComment)
                     {
@@ -64,13 +85,17 @@ namespace stract_lang
                         {
                             i++;
                         }
+                        break;
                     }
 
                     if (code[i] == stringDelimiter)
                     {
                         if (word != "")
                         {
-                            // TODO: parse error
+                            Console.WriteLine("Syntax error: ");
+                            Console.WriteLine("  - String cannot start directly after an identifier.");
+                            PrintCodeLine(wordStart, i + 1, i, code, true, true);
+                            return;
                         }
 
                         word += code[i];
@@ -88,8 +113,32 @@ namespace stract_lang
                             i++;
                         }
 
-                        words.Add(word);
-                        tokens.Add(new StringToken(word.Substring(1, word.Length - 2)));
+                        tokens.Add(new Token(wordStart, i + 1, TokenType.String, word.Substring(1, word.Length - 2)));
+                        break;
+                    }
+
+                    bool foundSpecialWord = false;
+                    foreach (KeyValuePair<string, TokenType> specialWord in specialWords)
+                    {
+                        if (i + specialWord.Key.Length <= code.Length && code.Substring(i, specialWord.Key.Length) == specialWord.Key)
+                        {
+                            if (word != "")
+                            {
+                                tokens.Add(new Token(wordStart, i, TokenType.Identifier, word));
+                                wordStart = i;
+                            }
+
+                            i += specialWord.Key.Length - 1;
+
+                            tokens.Add(new Token(wordStart, i + 1, specialWord.Value, specialWord.Key));
+
+                            foundSpecialWord = true;
+                            break;
+                        }
+                    }
+
+                    if (foundSpecialWord)
+                    {
                         break;
                     }
 
@@ -97,30 +146,8 @@ namespace stract_lang
                     {
                         if (word != "")
                         {
-                            words.Add(word);
+                            tokens.Add(new Token(wordStart, i, TokenType.Identifier, word));
                         }
-                        break;
-                    }
-
-                    bool foundSpecialWord = false;
-                    foreach (string specialWord in specialWords)
-                    {
-                        if (i + specialWord.Length <= code.Length && code.Substring(i, specialWord.Length) == specialWord)
-                        {
-                            if (word != "")
-                            {
-                                words.Add(word);
-                            }
-
-                            words.Add(specialWord);
-                            foundSpecialWord = true;
-                            i += specialWord.Length - 1;
-                            break;
-                        }
-                    }
-
-                    if (foundSpecialWord)
-                    {
                         break;
                     }
 
@@ -131,11 +158,96 @@ namespace stract_lang
                 i++;
             }
 
-            foreach (string word in words)
+            foreach (Token token in tokens)
             {
-                Console.WriteLine(word);
+                PrintCodeLine(token.codeIndexStart, token.codeIndexEnd, -1, code, true, true);
             }
         }
+
+        private static void PrintCodeLine(int highlightBegin, int highlightEnd, int markPoint, string code, bool underline, bool showLineNumber)
+        {
+            highlightBegin = Math.Clamp(highlightBegin, 0, code.Length);
+            highlightEnd = Math.Clamp(highlightEnd, 0, code.Length);
+
+            int begin = highlightBegin;
+            int end = highlightEnd - 1;
+
+            while (begin > 0 && code[begin - 1] != '\n')
+            {
+                begin--;
+            }
+
+            while (end < code.Length - 1 && code[end + 1] != '\n')
+            {
+                end++;
+            }
+
+            end++;
+
+            string lineNumber = "";
+            if (showLineNumber)
+            {
+                int line = 1;
+                for (int i = 0; i < highlightBegin; i++)
+                {
+                    if (code[i] == '\n')
+                    {
+                        line++;
+                    }
+                }
+                lineNumber = "Line " + line + ": ";
+            }
+
+            Console.WriteLine(lineNumber + code.Substring(begin, end - begin));
+            if (underline)
+            {
+                string highlight = 
+                    RepeatString(" ", lineNumber.Length) + 
+                    RepeatString(" ", highlightBegin - begin) +
+                    RepeatString("~", highlightEnd - highlightBegin) +
+                    RepeatString(" ", end - highlightEnd);
+                if (markPoint < highlightEnd && markPoint >= highlightBegin)
+                {
+                    char[] highlightChars = highlight.ToCharArray();
+                    highlightChars[lineNumber.Length + markPoint - begin] = '^';
+                    highlight = new string(highlightChars);
+                }
+                Console.WriteLine(highlight);
+            }
+
+        }
+
+        public static string RepeatString(string toRepeat, int count)
+        {
+            return string.Concat(Enumerable.Repeat(toRepeat, count));
+        }
+    }
+
+    class Token
+    {
+        public int codeIndexStart;
+        public int codeIndexEnd;
+        public TokenType tokenType;
+
+        public string content;
+
+        public Token(int codeIndexStart, int codeIndexEnd, TokenType tokenType, string content = "")
+        {
+            this.tokenType = tokenType;
+            this.codeIndexStart = codeIndexStart;
+            this.codeIndexEnd = codeIndexEnd;
+            this.content = content;
+        }
+    }
+
+    enum TokenType
+    {
+        NotDefined,
+        Identifier,
+        String,
+        ParenthesisStart,
+        ParenthesisEnd,
+        Assign,
     }
 
     enum Operation {
@@ -163,30 +275,4 @@ namespace stract_lang
         // input parameters
         // scope
     }
-
-    class Token
-    {
-        public int CodeIndex;
-    }
-
-    class IdentifierToken : Token
-    {
-        public string Name;
-    }
-
-    class AssignToken : Token { };
-    class ScopeStartToken : Token { };
-    class ScopeEndToken : Token { };
-    class ParenthesisStartToken : Token { };
-    class ParenthesisEndToken : Token { };
-
-    class StringToken : Token 
-    {
-        public string Content;
-
-        public StringToken(string content)
-        {
-            this.Content = content;
-        }
-    };
 }
