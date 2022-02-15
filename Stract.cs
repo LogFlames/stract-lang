@@ -184,35 +184,69 @@ namespace stract_lang
 
             end++;
 
-            string lineNumber = "";
+            int firstLine = 1;
+            int lastLine = 1;
+            string largestLineNumber = "";
             if (showLineNumber)
             {
-                int line = 1;
                 for (int i = 0; i < highlightBegin; i++)
                 {
                     if (code[i] == '\n')
                     {
-                        line++;
+                        firstLine++;
+                        lastLine++;
                     }
                 }
-                lineNumber = "Line " + line + ": ";
+                for (int i = highlightBegin; i < highlightEnd; i++)
+                {
+                    if (code[i] == '\n')
+                    {
+                        lastLine++;
+                    }
+                }
+
+                largestLineNumber = "Line " + lastLine.ToString() + ": ";
             }
 
-            Console.WriteLine(lineNumber + code.Substring(begin, end - begin));
-            if (underline)
+            string[] lines = code.Substring(begin, end - begin).Split('\n', StringSplitOptions.None);
+
+            int prog = 0;
+            for (int i = 0; i < lines.Length; i++)
             {
-                string highlight = 
-                    RepeatString(" ", lineNumber.Length) + 
-                    RepeatString(" ", highlightBegin - begin) +
-                    RepeatString("~", highlightEnd - highlightBegin) +
-                    RepeatString(" ", end - highlightEnd);
-                if (markPoint < highlightEnd && markPoint >= highlightBegin)
+                string lineNumber = "Line " + (firstLine + i).ToString() + ": ";
+                Console.WriteLine(lineNumber + lines[i]);
+
+                if (underline)
                 {
-                    char[] highlightChars = highlight.ToCharArray();
-                    highlightChars[lineNumber.Length + markPoint - begin] = '^';
-                    highlight = new string(highlightChars);
+                    string highlight = RepeatString(" ", lineNumber.Length);
+                    if (i == 0)
+                    {
+                        highlight += RepeatString(" ", highlightBegin - begin);
+                    }
+                    highlight += RepeatString("~", 
+                        lines[i].Length - 
+                        (i == 0 ? (highlightBegin - begin) : 0) -
+                        (i == lines.Length - 1 ? (end - highlightEnd) : 0));
+
+                    if (i == lines.Length - 1)
+                    {
+                        highlight += RepeatString(" ", end - highlightEnd);
+                    }
+
+                    if (markPoint < highlightEnd && markPoint >= highlightBegin)
+                    {
+                        if ((markPoint - begin) - prog >= 0 && (markPoint - begin) - prog < lines[i].Length + 1)
+                        {
+                            char[] highlightChars = (highlight + " ").ToCharArray();
+                            highlightChars[lineNumber.Length + markPoint - begin - prog] = '^';
+                            highlight = new string(highlightChars);
+                        }
+                    }
+
+                    prog += lines[i].Length + 1;
+
+                    Console.WriteLine(highlight);
                 }
-                Console.WriteLine(highlight);
             }
 
         }
