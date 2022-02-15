@@ -39,20 +39,120 @@ namespace stract_lang
             string code = File.ReadAllText(sourceFilePath);
             code = code.Replace("\r\n", "\n");
             code = code.Replace("\t", "    ");
-            Tokenize(code);
+            List<Token> tokens = Tokenize(code);
+
+            if (tokens == null)
+            {
+                return;
+            }
+
+            int codeIndex = 0;
+            Assimilate(0, ref codeIndex, tokens, code);
         }
 
-        private static void Tokenize(string code)
+        private static StractScope Assimilate(int openingBracketIndex, ref int i, List<Token> tokens, string code)
+        {
+            StractScope scope = new StractScope();
+            scope.tokenIndexStart = openingBracketIndex;
+
+            // TODO: I think this should be two functions, one that takes the next object and one that assimilates them, maybe parse for the next object
+            // The parse function could supply to where it jumped, so that it can be recursive in a nice way
+
+            while (i < tokens.Count && tokens[i].tokenType != TokenType.BracketEnd)
+            {
+                scope.codeObjects.Add(Parse(ref i, tokens, code));
+                i++;
+            }
+
+            scope.tokenIndexEnd = i;
+
+            return scope;
+        }
+
+        private static StractCodeObject Parse(ref int i, List<Token> tokens, string code)
+        {
+            if (i + 2 < tokens.Count &&
+                tokens[i].tokenType == TokenType.ParenthesisStart &&
+                tokens[i + 1].tokenType == TokenType.Identifier &&
+                tokens[i + 2].tokenType == TokenType.Colon)
+            {
+                StractStructTemplate structureTemplate = new StractStructTemplate();
+                structureTemplate.tokenIndexStart = i;
+
+                while (tokens[i].tokenType != TokenType.ParenthesisEnd)
+                {
+                    i++;
+                    ExpectTokenOfType(i, TokenType.Identifier, tokens, code);
+                    string name = tokens[i].content;
+                    StractType type = new StractType();
+                    type.tokenIndexStart = i;
+                    type.tokenIndexEnd = i;
+
+                    i++;
+                    ExpectTokenOfType(i, TokenType.Colon, tokens, code);
+
+                    i++;
+                    ExpectTokenOfType(i, TokenType.Identifier, tokens, code);
+
+                    if (tokens[i].tokenType == TokenType.ParenthesisStart)
+                    {
+                        i++;
+                        StractCodeObject codeObject = Parse(ref i, tokens, code);
+
+                        // if codeObject is type => cast to type
+                        type = (StractType)codeObject;
+                    }
+                    else
+                    {
+                        ExpectTokenOfType(i, TokenType.Identifier, tokens, code);
+                        type = new StractPrimitiveType(tokens[i].content);
+                    }
+
+                    structureTemplate.namedValueTypes.Add(name, type);
+
+                    i++;
+                    ExpectOneOfTokenTypes(i, new TokenType[] { TokenType.Comma, TokenType.ParenthesisEnd }, tokens, code);
+                }
+
+                structureTemplate.tokenIndexEnd = i;
+                i++;
+
+                return structureTemplate;
+            }
+            else if (i + 1 < tokens.Count &&
+                tokens[i].tokenType == TokenType.Identifier &&
+                tokens[i + 1].tokenType == TokenType.Assign)
+            {
+                string name = tokens[i].content;
+                i += 2;
+                StractCodeObject toAssign = Parse(ref i, tokens, code);
+                return new StractAssignment(name, toAssign);
+            }
+            else if (i < tokens.Count &&
+                tokens[i].tokenType == TokenType.BracketStart)
+            {
+                i++;
+                StractScope scope = Assimilate(i - 1, ref i, tokens, code);
+
+                return scope;
+            }
+
+            Console.WriteLine("Could not parse any code objects from this token.");
+            PrintCodeLine(tokens[i].codeIndexStart, tokens[i].codeIndexEnd, -1, code, true, true);
+            throw new Exception("Unable to parse code.");
+        }
+
+        private static List<Token> Tokenize(string code)
         {
             Dictionary<string, TokenType> specialWords = new Dictionary<string, TokenType>(){
-                { ",", TokenType.NotDefined },
+                { ",", TokenType.Comma },
                 { "(", TokenType.ParenthesisStart },
                 { ")", TokenType.ParenthesisEnd },
-                { "{", TokenType.NotDefined },
-                { "}", TokenType.NotDefined },
+                { "{", TokenType.BracketStart },
+                { "}", TokenType.BracketEnd },
                 { "=", TokenType.Assign},
-                { ";", TokenType.NotDefined },
-                { ":", TokenType.NotDefined },
+                { ";", TokenType.Semicolon },
+                { ":", TokenType.Colon },
             };
 
             char stringDelimiter = '"';
@@ -81,10 +181,12 @@ namespace stract_lang
                     }
                     if (i + beginMultilineComment.Length <= code.Length && code.Substring(i, beginMultilineComment.Length) == beginMultilineComment)
                     {
+                        i += beginLineComment.Length;
                         while (i < code.Length && code.Substring(i, endMultilineComment.Length) != endMultilineComment)
                         {
                             i++;
                         }
+                        i += endMultilineComment.Length;
                         break;
                     }
 
@@ -95,7 +197,7 @@ namespace stract_lang
                             Console.WriteLine("Syntax error: ");
                             Console.WriteLine("  - String cannot start directly after an identifier.");
                             PrintCodeLine(wordStart, i + 1, i, code, true, true);
-                            return;
+                            return null;
                         }
 
                         word += code[i];
@@ -162,6 +264,37 @@ namespace stract_lang
             {
                 PrintCodeLine(token.codeIndexStart, token.codeIndexEnd, -1, code, true, true);
             }
+
+            return tokens;
+        }
+
+        private static void ExpectTokenOfType(int tokenIndex, TokenType expectedType, List<Token> tokens, string code)
+        {
+            if (tokens[tokenIndex].tokenType != expectedType)
+            {
+                Console.WriteLine("Unexpected token. Expected: " + expectedType.ToString() + ", but got: " + tokens[tokenIndex].tokenType.ToString());
+                PrintCodeLine(tokens[tokenIndex].codeIndexStart, tokens[tokenIndex].codeIndexEnd, -1, code, true, true);
+                throw new Exception("Unexpected token encountered.");
+            }
+        }
+
+        private static void ExpectOneOfTokenTypes(int tokenIndex, TokenType[] expectedTypes, List<Token> tokens, string code)
+        {
+            if (!expectedTypes.Contains(tokens[tokenIndex].tokenType))
+            {
+                string tokensString = "";
+                for (int i = 0; i < expectedTypes.Length; i++)
+                {
+                    tokensString += expectedTypes[i].ToString();
+                    if (i != expectedTypes.Length - 1)
+                    {
+                        tokensString += ", ";
+                    }
+                }
+                Console.WriteLine("Unexpected token. Expected one of the following tokens: [ " + tokensString + " ], but got: " + tokens[tokenIndex].tokenType.ToString());
+                PrintCodeLine(tokens[tokenIndex].codeIndexStart, tokens[tokenIndex].codeIndexEnd, -1, code, true, true);
+                throw new Exception("Unexpected token encountered.");
+            }
         }
 
         private static void PrintCodeLine(int highlightBegin, int highlightEnd, int markPoint, string code, bool underline, bool showLineNumber)
@@ -214,6 +347,7 @@ namespace stract_lang
             for (int i = 0; i < lines.Length; i++)
             {
                 string lineNumber = "Line " + (firstLine + i).ToString() + ": ";
+                lineNumber += RepeatString(" ", largestLineNumber.Length - lineNumber.Length);
                 Console.WriteLine(lineNumber + lines[i]);
 
                 if (underline)
@@ -257,7 +391,7 @@ namespace stract_lang
         }
     }
 
-    class Token
+    public class Token
     {
         public int codeIndexStart;
         public int codeIndexEnd;
@@ -274,39 +408,76 @@ namespace stract_lang
         }
     }
 
-    enum TokenType
+    public enum TokenType
     {
         NotDefined,
         Identifier,
         String,
         ParenthesisStart,
         ParenthesisEnd,
+        BracketStart,
+        BracketEnd,
+        Colon,
+        Comma,
+        Semicolon,
         Assign,
     }
 
-    enum Operation {
-
+    public class StractCodeObject
+    {
+        public int tokenIndexStart;
+        public int tokenIndexEnd;
     }
 
-    struct Struct
+    public class StractAssignment : StractCodeObject
     {
-        // sturct template
-        // hashmap: name -> values
+        public string identifier;
+        public StractCodeObject codeObject;
+
+        public StractAssignment(string identifier, StractCodeObject codeObject)
+        {
+            this.identifier = identifier;
+            this.codeObject = codeObject;
+        }
     }
 
-    struct StructTemplate
+    public class StractType : StractCodeObject
     {
-        // hashmap with names and types
     }
 
-    struct Scope
+    public class StractStructTemplate : StractType
     {
-        // list of "operations"
+        public Dictionary<string, StractType> namedValueTypes;
+
+        public StractStructTemplate()
+        {
+            namedValueTypes = new Dictionary<string, StractType>();
+        }
     }
 
-    struct Function
+
+    public class StractPrimitiveType : StractType
     {
-        // input parameters
-        // scope
+        public string name;
+
+        public StractPrimitiveType(string name)
+        {
+            this.name = name;
+        }
+    }
+
+    public class StractScope : StractCodeObject
+    {
+        public List<StractCodeObject> codeObjects;
+
+        public StractScope()
+        {
+            codeObjects = new List<StractCodeObject>();
+        }
+    }
+
+    public class StractFunction : StractCodeObject
+    {
+
     }
 }
