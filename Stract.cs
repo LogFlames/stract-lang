@@ -212,6 +212,10 @@ namespace stract_lang
 
                 return structTemplate;
             }
+            else if (tokens[i].tokenType == TokenType.Identifier)
+            {
+                // Has this been assigned, if so return that
+            }
 
             Console.WriteLine("Could not parse any code objects from this token.");
             PrintCodeLine(tokens[i], -1, true, true, code);
