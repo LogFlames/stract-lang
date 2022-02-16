@@ -2,8 +2,9 @@
 
 /* NOTE(Elias): Should empty parenthesis be treated as a structTemplate? It would work well for functions (that take structTemplate and then scope) */
 main = () {
-	person = ("David Malte Elias //Lundell", 18, 182);
-	person = ("David Malte Elias Lundell"//, 18, 182);
+	person = ("David Malte Elias //Lundell", 18, 182) (name: string, age: number, height: number);
 };
 
-var "string"
+
+
+
