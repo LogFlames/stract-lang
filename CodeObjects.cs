@@ -39,13 +39,12 @@ namespace stract_lang
         public string identifier;
         public StractCodeObject codeObject;
 
-        public StractAssignment(string identifier, StractCodeObject codeObject)
+        public StractAssignment(string identifier)
         {
             isAssignment = true;
             NAME = "Assignment";
 
             this.identifier = identifier;
-            this.codeObject = codeObject;
         }
     }
 

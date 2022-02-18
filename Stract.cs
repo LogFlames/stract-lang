@@ -208,8 +208,7 @@ namespace stract_lang
                 int assigmentStart = i;
                 string name = tokens[i].content;
                 i += 2;
-                StractCodeObject toAssign = Parse(ref i, tokens, code, assignments);
-                StractAssignment assignment = new StractAssignment(name, toAssign);
+                StractAssignment assignment = new StractAssignment(name);
                 assignment.tokenIndexStart = assigmentStart;
                 assignment.tokenIndexEnd = i;
 
